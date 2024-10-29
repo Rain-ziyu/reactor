@@ -6,14 +6,84 @@ import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.SignalType;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 
+class MyEventProcessor<T> {
+    private SingleThreadEventListener<T> listener;
+
+    public void register(SingleThreadEventListener singleThreadEventListener) {
+        listener = singleThreadEventListener;
+    }
+
+    public void onLine(T t) {
+        listener.onDataChunk(List.of(t));
+    }
+}
+
 public class FluxDemo {
     public static void main(String[] args) {
-        create();
+        push();
+    }
+
+    /**
+     * 方法self作用为：
+     * 指定自定义线程池去执行中间操作
+     *
+     * @param
+     * @return void
+     * @throws
+     * @author ziyu
+     */
+    public static void self() {
+        Flux.range(1, 10)
+            .publishOn(Schedulers.boundedElastic())
+            .log()
+            .subscribe();
+
+    }
+
+    public static void push() {
+        MyEventProcessor<String> myEventProcessor = new MyEventProcessor<>();
+        Flux.push(sink -> {
+                myEventProcessor.register(
+                        new SingleThreadEventListener<String>() {
+
+                            public void onDataChunk(List<String> chunk) {
+                                for (String s : chunk) {
+                                    sink.next(s);
+                                }
+                            }
+
+                            public void processComplete() {
+                                sink.complete();
+                            }
+
+                            public void processError(Throwable e) {
+                                sink.error(e);
+                            }
+                        });
+            })
+            .log()
+            .subscribe();
+        myEventProcessor.onLine("hello");
+        myEventProcessor.onLine("world");
+        new Thread(() -> {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            myEventProcessor.onLine("world111111");
+        }).start();
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void create() {
@@ -153,4 +223,12 @@ class MyListener {
     public void onLine(String msg) {
         this.fluxSink.next(msg);
     }
+}
+
+interface SingleThreadEventListener<T> {
+    void onDataChunk(List<T> chunk);
+
+    void processComplete();
+
+    void processError(Throwable e);
 }
