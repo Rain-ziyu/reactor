@@ -12,6 +12,7 @@ import reactor.core.scheduler.Schedulers;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class MyEventProcessor<T> {
     private SingleThreadEventListener<T> listener;
@@ -27,7 +28,63 @@ class MyEventProcessor<T> {
 
 public class FluxDemo {
     public static void main(String[] args) {
-        self();
+        zip();
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+/**
+ * 方法zip作用为：
+ * 1.将多个流合并成一个流 按照顺序关系形成元组
+ * @author ziyu
+ * @param
+ * @throws
+ * @return void
+ */
+    public static void zip() {
+        Flux<String> zip = Flux.zip(Flux.just(1, 2, 3).delayElements(Duration.ofMillis(1000)), Flux.just("4", "5", "6","7").delayElements(Duration.ofMillis(2000)), (i1, i2) -> i1 + i2);
+        zip.log().subscribe(System.out::println);
+    }
+
+    /**
+     * 方法merge作用为：
+     * 1.将多个流合并成一个流 与concat方法不同在于 merge将两个流按照生产顺序进行合并
+     * concat直接按照连接顺序进行顺序消费
+     *
+     * @param
+     * @return void
+     * @throws
+     * @author ziyu
+     */
+    public static void merge() {
+        Flux<Integer> just = Flux.just(1, 2, 3)
+                                 .delayElements(Duration.ofMillis(1000));
+        Flux<Integer> just1 = Flux.just(4, 5, 6)
+                                  .delayElements(Duration.ofMillis(1500));
+        // Flux.merge(just, just1)
+        //         .log()
+        //     .subscribe(System.out::println);
+        Flux.concat(just, just1)
+            .log()
+            .subscribe(System.out::println);
+    }
+
+    public static void transform() {
+        AtomicInteger counter = new AtomicInteger();
+        Flux<Integer> transform = Flux.just(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                                      // .transform(x -> {   无论有多少个消费者转换逻辑只会执行一次
+                                      .transformDeferred(x -> {   // 每有一个消费者都会执行一次转换逻辑
+                                          if (counter.incrementAndGet() % 2 == 1) {
+                                              return x.map(i -> i * 11);
+                                          } else {
+                                              return x;
+                                          }
+                                      });
+        transform.subscribe(System.out::println);
+        transform.subscribe(System.out::println);
+
     }
 
     /**
