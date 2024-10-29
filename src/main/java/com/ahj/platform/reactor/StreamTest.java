@@ -9,6 +9,7 @@ public class StreamTest {
                                         System.out.println("filter: " + s);
                                         return true;
                                     })
+                                    .flatMap(s -> Stream.of(s, s))
                                     .peek(s -> {
                                         System.out.println("peek: " + s);
                                         s = s + "!";

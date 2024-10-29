@@ -6,6 +6,7 @@ import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.SignalType;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
@@ -26,7 +27,7 @@ class MyEventProcessor<T> {
 
 public class FluxDemo {
     public static void main(String[] args) {
-        push();
+        self();
     }
 
     /**
@@ -39,11 +40,13 @@ public class FluxDemo {
      * @author ziyu
      */
     public static void self() {
-        Flux.range(1, 10)
+        Scheduler s = Schedulers.newParallel("parallel-schedu1er", 4);
+        Flux.range(1, 3)
+            .log()
             .publishOn(Schedulers.boundedElastic())
+            .subscribeOn(s)
             .log()
             .subscribe();
-
     }
 
     public static void push() {
