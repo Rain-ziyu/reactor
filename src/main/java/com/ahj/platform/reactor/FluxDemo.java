@@ -28,24 +28,69 @@ class MyEventProcessor<T> {
 
 public class FluxDemo {
     public static void main(String[] args) {
-        zip();
+        handlerError();
         try {
             Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
-/**
- * 方法zip作用为：
- * 1.将多个流合并成一个流 按照顺序关系形成元组
- * @author ziyu
- * @param
- * @throws
- * @return void
- */
+
+    /**
+     * 方法handlerError作用为：
+     * 在Reactive Streams中，错误是终端事件。
+     * 一旦发生错误，它就会停止 序列并沿着运算符链传播到最后一步，即 Subscriber的订阅服务器及其onError方法。
+     *
+     * @param
+     * @return void
+     * @throws
+     * @author ziyu
+     */
+    public static void handlerError() {
+        Flux.just("foo", "bar")
+            .delayElements(Duration.ofMillis(1000))
+            .map(s -> {
+                throw new IllegalArgumentException(s);
+            })
+            // 感知异常情况出现，但不会影响异常处理与传播
+            .doOnError(e -> System.out.println("ERROR: " + e))
+            // // 错误后停止流  以错误结束  停止流即使该流有其他订阅者并进行了其他异常处理也会停止
+            // .onErrorStop()
+            // // 错误后停止流  以完成结束
+            // .onErrorComplete()
+            // 当出现异常时继续执行，不会影响后续其他元素的处理
+            .onErrorContinue(IllegalArgumentException.class, (e, t) -> System.out.println("ERROR: " + e))
+            // 当出现异常时整个流的后续元素不再处理，直接返回其他元素
+            // .onErrorReturn(IllegalArgumentException.class, "zhale1111")
+            // // 当出现异常时整个流的后续元素不再处理调用你传入的指定函数，返回一个新流
+            // .onErrorResume(IllegalAccessError.class, err -> Mono.just("zhale111"))
+            // // 当出现异常时整个流的后续元素不再处理调用你传入的指定函数，使其返回一个封装后的其他异常
+            // .onErrorMap(IllegalArgumentException.class, err -> new IllegalArgumentException("err.getMessage()"))
+            .doOnError(e -> System.out.println("ERROR: " + e))
+            // 无论是否出现异常都会执行
+            .doFinally(signalType -> System.out.println("FINALLY: " + signalType))
+            .log()
+            .subscribe(v -> System.out.println("GOT VALUE"),
+                       e -> System.out.println("ERROR: " + e));
+    }
+
+    /**
+     * 方法zip作用为：
+     * 1.将多个流合并成一个流 按照顺序关系形成元组
+     *
+     * @param
+     * @return void
+     * @throws
+     * @author ziyu
+     */
     public static void zip() {
-        Flux<String> zip = Flux.zip(Flux.just(1, 2, 3).delayElements(Duration.ofMillis(1000)), Flux.just("4", "5", "6","7").delayElements(Duration.ofMillis(2000)), (i1, i2) -> i1 + i2);
-        zip.log().subscribe(System.out::println);
+        Flux<String> zip = Flux.zip(Flux.just(1, 2, 3)
+                                        .delayElements(Duration.ofMillis(1000)), Flux.just("4", "5", "6", "7")
+                                                                                     .delayElements(
+                                                                                             Duration.ofMillis(2000)),
+                                    (i1, i2) -> i1 + i2);
+        zip.log()
+           .subscribe(System.out::println);
     }
 
     /**
