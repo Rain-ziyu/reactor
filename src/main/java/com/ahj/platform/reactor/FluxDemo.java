@@ -25,12 +25,57 @@ class MyEventProcessor<T> {
 
 public class FluxDemo {
     public static void main(String[] args) {
-        handlerError();
+        sinks();
         try {
             Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void sinks() {
+        // 单播 该管道只能绑定一个订阅者
+        Sinks.many()
+             .unicast();
+        // 广播 该管道可以绑定多个订阅者
+        Sinks.many()
+             .multicast();
+        // 是否给后来的订阅者重放之前的元素
+        Sinks.many()
+             .replay();
+        Sinks.ManySpec many = Sinks.many();
+        // Sinks.Many<Object> objectMany = many
+        //         .replay()
+        //         .limit(3);
+        // 多播
+        Sinks.Many<Object> objectMany = many
+                .multicast()
+                .onBackpressureBuffer();
+        new Thread(() -> {
+            for (int i = 0; i < 5; i++) {
+                objectMany.tryEmitNext(i);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
+        new Thread(() -> {
+            objectMany.asFlux()
+                      .subscribe(System.out::println);
+        }).start();
+        new Thread(() -> {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            objectMany.asFlux()
+                      .subscribe(System.out::println);
+        }).start();
+
     }
 
     /**
