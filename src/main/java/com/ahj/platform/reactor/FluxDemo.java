@@ -2,10 +2,7 @@ package com.ahj.platform.reactor;
 
 import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
-import reactor.core.publisher.BaseSubscriber;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
-import reactor.core.publisher.SignalType;
+import reactor.core.publisher.*;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
@@ -63,10 +60,10 @@ public class FluxDemo {
             // 当出现异常时整个流的后续元素不再处理，直接返回其他元素
             // .onErrorReturn(IllegalArgumentException.class, "zhale1111")
             // // 当出现异常时整个流的后续元素不再处理调用你传入的指定函数，返回一个新流
-            // .onErrorResume(IllegalAccessError.class, err -> Mono.just("zhale111"))
+            // .onErrorResume(IllegalArgumentException.class, err -> Flux.just("zhale111","aaaa"))
             // // 当出现异常时整个流的后续元素不再处理调用你传入的指定函数，使其返回一个封装后的其他异常
             // .onErrorMap(IllegalArgumentException.class, err -> new IllegalArgumentException("err.getMessage()"))
-            .doOnError(e -> System.out.println("ERROR: " + e))
+            // .doOnError(e -> System.out.println("ERROR: " + e))
             // 无论是否出现异常都会执行
             .doFinally(signalType -> System.out.println("FINALLY: " + signalType))
             .log()
