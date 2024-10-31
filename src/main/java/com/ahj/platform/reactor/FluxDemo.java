@@ -25,12 +25,47 @@ class MyEventProcessor<T> {
 
 public class FluxDemo {
     public static void main(String[] args) {
-        sinks();
+        parallel();
         try {
-            Thread.sleep(10000);
+            Thread.sleep(15000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+public static void parallel() {
+        Flux.just(1, 2,14, 15, 16, 3, 4,12, 13,  17, 18, 5, 6, 7, 8, 9, 10, 11,  19, 20)
+                .delayElements(Duration.ofSeconds(1L))
+                .buffer(10)
+                .parallel(8)
+                .runOn(Schedulers.newParallel("parallel-scheduler"))
+                .log()
+                .flatMap(lisy->Flux.fromIterable(lisy))
+                .collectSortedList(Integer::compareTo)
+                .subscribe(System.out::println);
+}
+    /**
+     * 方法cache作用为：
+     * 1.缓存数据，当订阅者订阅时，如果缓存有数据，则直接返回缓存数据，如果缓存没有数据，则等待数据产生，然后返回
+     * 如果不主动调用默认缓存所有
+     *
+     * @param
+     * @return void
+     * @throws
+     * @author ziyu
+     */
+    public static void cache() {
+        Flux<Integer> cache = Flux.range(1, 10)
+                                  .delayElements(Duration.ofMillis(1000))
+                                  .cache(3);
+        cache.subscribe(System.out::println);
+        new Thread(() -> {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            cache.subscribe(System.out::println);
+        }).start();
     }
 
     public static void sinks() {
