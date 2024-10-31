@@ -5,6 +5,7 @@ import reactor.core.Disposable;
 import reactor.core.publisher.*;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
+import reactor.util.context.Context;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -25,24 +26,46 @@ class MyEventProcessor<T> {
 
 public class FluxDemo {
     public static void main(String[] args) {
-        parallel();
+        threadLocal();
         try {
             Thread.sleep(15000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
-public static void parallel() {
-        Flux.just(1, 2,14, 15, 16, 3, 4,12, 13,  17, 18, 5, 6, 7, 8, 9, 10, 11,  19, 20)
-                .delayElements(Duration.ofSeconds(1L))
-                .buffer(10)
-                .parallel(8)
-                .runOn(Schedulers.newParallel("parallel-scheduler"))
-                .log()
-                .flatMap(lisy->Flux.fromIterable(lisy))
-                .collectSortedList(Integer::compareTo)
+
+    /**
+     * 方法threadLocal作用为：
+     * 在响应式编程中依赖于ThreadLocal进行上下文传递的都是无法跨线程共享的，所以需要通过线程上下文传递
+     *
+     * @param
+     * @return void
+     * @throws
+     * @author ziyu
+     */
+    public static void threadLocal() {
+        Flux.just(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                .transformDeferredContextual((flux,context)->{
+                    System.out.println("context:" + context);
+                    System.out.println("flux:"+flux);
+                    return flux.map(t -> t + " " + context);
+                })
+                .contextWrite(Context.of("traceId", "123"))
                 .subscribe(System.out::println);
-}
+    }
+
+    public static void parallel() {
+        Flux.just(1, 2, 14, 15, 16, 3, 4, 12, 13, 17, 18, 5, 6, 7, 8, 9, 10, 11, 19, 20)
+            .delayElements(Duration.ofSeconds(1L))
+            .buffer(10)
+            .parallel(8)
+            .runOn(Schedulers.newParallel("parallel-scheduler"))
+            .log()
+            .flatMap(lisy -> Flux.fromIterable(lisy))
+            .collectSortedList(Integer::compareTo)
+            .subscribe(System.out::println);
+    }
+
     /**
      * 方法cache作用为：
      * 1.缓存数据，当订阅者订阅时，如果缓存有数据，则直接返回缓存数据，如果缓存没有数据，则等待数据产生，然后返回
