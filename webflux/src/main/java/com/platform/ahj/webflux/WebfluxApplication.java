@@ -12,7 +12,7 @@ import reactor.netty.DisposableServer;
 import reactor.netty.http.server.HttpServer;
 
 import java.nio.charset.StandardCharsets;
-
+// @EnableWebFlux   // 开启webflux的自定义；将会禁用WebFlux的很多默认效果
 @SpringBootApplication
 @Slf4j
 public class WebfluxApplication {
