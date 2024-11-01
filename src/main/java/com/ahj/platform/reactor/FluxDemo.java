@@ -26,12 +26,25 @@ class MyEventProcessor<T> {
 
 public class FluxDemo {
     public static void main(String[] args) {
-        threadLocal();
+        test();
         try {
             Thread.sleep(15000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void test() {
+        Flux.range(1, 10)
+            .publishOn(Schedulers.boundedElastic())
+            .map(i -> Flux.range(1, 10)
+                          .map(j -> "i=" + i + ", j=" + j)
+                          .delayElements(java.time.Duration.ofMillis(100))
+                    .subscribe())
+            .delayElements(java.time.Duration.ofSeconds(1))
+            .subscribe(value->{
+                System.out.println(value);
+            });
     }
 
     /**
@@ -45,13 +58,13 @@ public class FluxDemo {
      */
     public static void threadLocal() {
         Flux.just(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-                .transformDeferredContextual((flux,context)->{
-                    System.out.println("context:" + context);
-                    System.out.println("flux:"+flux);
-                    return flux.map(t -> t + " " + context);
-                })
-                .contextWrite(Context.of("traceId", "123"))
-                .subscribe(System.out::println);
+            .transformDeferredContextual((flux, context) -> {
+                System.out.println("context:" + context);
+                System.out.println("flux:" + flux);
+                return flux.map(t -> t + " " + context);
+            })
+            .contextWrite(Context.of("traceId", "123"))
+            .subscribe(System.out::println);
     }
 
     public static void parallel() {

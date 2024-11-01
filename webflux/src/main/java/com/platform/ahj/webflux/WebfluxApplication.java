@@ -1,6 +1,8 @@
 package com.platform.ahj.webflux;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.http.server.reactive.HttpHandler;
@@ -11,11 +13,11 @@ import reactor.netty.http.server.HttpServer;
 
 import java.nio.charset.StandardCharsets;
 
-// @SpringBootApplication
+@SpringBootApplication
 @Slf4j
 public class WebfluxApplication {
 
-    public static void main(String[] args) {
+    public static void httpHandler(String[] args) {
 
         HttpHandler httpHandler = (request, response) -> {
             log.info("请求路径：{}", request.getURI());
@@ -40,4 +42,7 @@ public class WebfluxApplication {
         // SpringApplication.run(WebfluxApplication.class, args);
     }
 
+    public static void main(String[] args) {
+        SpringApplication.run(WebfluxApplication.class, args);
+    }
 }
