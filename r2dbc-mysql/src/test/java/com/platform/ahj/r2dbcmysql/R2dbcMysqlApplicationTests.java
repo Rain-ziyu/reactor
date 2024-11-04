@@ -1,18 +1,31 @@
 package com.platform.ahj.r2dbcmysql;
 
+import com.platform.ahj.r2dbcmysql.controller.UserController;
+import com.platform.ahj.r2dbcmysql.repositories.UserRepositories;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static io.r2dbc.spi.ConnectionFactoryOptions.*;
 
-// @SpringBootTest
+@Slf4j
+@SpringBootTest
 class R2dbcMysqlApplicationTests {
     static Mono<Connection> connectionMono = null;
+
+    @Autowired
+    private UserController userController;
+
+    @Autowired
+    private UserRepositories userRepositories;
 
     @BeforeAll
     static void init() {
@@ -32,6 +45,20 @@ class R2dbcMysqlApplicationTests {
     }
 
     @Test
+    void testQueryByTemplate() throws InterruptedException {
+        Flux<com.platform.ahj.r2dbcmysql.entity.User> allUser = userController.getAllUser();
+        allUser.subscribe(x -> log.info(x.toString()));
+        Thread.sleep(10000);
+    }
+
+    @Test
+    void testQueryByRepository() throws InterruptedException {
+        userRepositories.findAll()
+                        .subscribe(x -> log.info(x.toString()));
+        Thread.sleep(10000);
+    }
+
+    @Test
     void contextLoads() throws InterruptedException {
 
 
@@ -48,7 +75,8 @@ class R2dbcMysqlApplicationTests {
     @Test
     public void select() throws InterruptedException {
         connectionMono.flatMapMany(
-                              connection -> connection.createStatement("SELECT * FROM user where id = ?id and name=?name")
+                              connection -> connection.createStatement("SELECT * FROM user where id = ?id and " +
+                                                                               "name=?name")
                                                       .bind("id", 111)
                                                       .bind("name", "eee")
                                                       .execute())
