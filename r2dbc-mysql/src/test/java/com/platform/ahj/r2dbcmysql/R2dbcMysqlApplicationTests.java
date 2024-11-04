@@ -1,7 +1,8 @@
 package com.platform.ahj.r2dbcmysql;
 
 import com.platform.ahj.r2dbcmysql.controller.UserController;
-import com.platform.ahj.r2dbcmysql.repositories.UserRepositories;
+import com.platform.ahj.r2dbcmysql.repositories.BookRepository;
+import com.platform.ahj.r2dbcmysql.repositories.UserRepository;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
@@ -25,7 +26,10 @@ class R2dbcMysqlApplicationTests {
     private UserController userController;
 
     @Autowired
-    private UserRepositories userRepositories;
+    private UserRepository userRepository;
+
+    @Autowired
+    private BookRepository bookRepository;
 
     @BeforeAll
     static void init() {
@@ -53,8 +57,19 @@ class R2dbcMysqlApplicationTests {
 
     @Test
     void testQueryByRepository() throws InterruptedException {
-        userRepositories.findAll()
-                        .subscribe(x -> log.info(x.toString()));
+        userRepository.findAll()
+                      .subscribe(x -> log.info("findAll:{}", x.toString()));
+        userRepository.findTopById(111l)
+                      .subscribe(x -> log.info("findTopById:{}", x.toString()));
+        userRepository.findAllByNameLike("1%")
+                      .subscribe(x -> log.info("findAllByNameLike:{}", x.toString()));
+        Thread.sleep(10000);
+    }
+
+    @Test
+    void testJoin() throws InterruptedException {
+        bookRepository.hahaBook(1l)
+                      .subscribe(x -> log.info("hahaBook:{}", x));
         Thread.sleep(10000);
     }
 
