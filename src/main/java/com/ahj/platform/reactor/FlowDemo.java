@@ -33,7 +33,7 @@ public class FlowDemo {
     public static void main(String[] args) throws InterruptedException {
         // 发布者
         SubmissionPublisher<String> submissionPublisher = new SubmissionPublisher();
-
+        Thread thread = new Thread();
         // 订阅者
         Flow.Subscriber<String> subscriber = new Flow.Subscriber() {
             Flow.Subscription subscription;
