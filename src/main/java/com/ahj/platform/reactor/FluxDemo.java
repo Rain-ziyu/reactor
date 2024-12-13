@@ -26,7 +26,7 @@ class MyEventProcessor<T> {
 
 public class FluxDemo {
     public static void main(String[] args) {
-        test();
+        cache();
         try {
             Thread.sleep(15000);
         } catch (InterruptedException e) {
@@ -91,17 +91,25 @@ public class FluxDemo {
      */
     public static void cache() {
         Flux<Integer> cache = Flux.range(1, 10)
-                                  .delayElements(Duration.ofMillis(1000))
+                                  // .delayElements(Duration.ofMillis(1000))
                                   .cache(3);
         cache.subscribe(System.out::println);
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
             cache.subscribe(System.out::println);
-        }).start();
+        });
+        thread.start();
+        try {
+            Thread.sleep(5500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        thread.start();
+
     }
 
     public static void sinks() {
