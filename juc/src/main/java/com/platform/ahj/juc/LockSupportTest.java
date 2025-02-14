@@ -1,6 +1,7 @@
 package com.platform.ahj.juc;
 
 import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReentrantLock;
 
 class MyThread extends Thread {
     private Object object;
@@ -50,5 +51,14 @@ public class LockSupportTest {
         // 获取许可
         LockSupport.park("ParkAndUnparkDemo");
         System.out.println("after park");
+        ReentrantLock lock = new ReentrantLock();
+        lock.lock();  // 计数器 = 1
+
+        try {
+            // 临界区代码...
+        } finally {
+            lock.unlock();  // 计数器 = 0，锁释放 ✅
+            lock.unlock();  // 计数器 = -1，抛出 IllegalMonitorStateException ❌
+        }
     }
 }
